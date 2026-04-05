@@ -131,8 +131,8 @@ const InsightsPage = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Line dataKey="income" stroke="#22c55e" />
-              <Line dataKey="expense" stroke="#ef4444" />
+              <Line type = "monotone" dataKey="income" stroke="#22c55e" strokeWidth={3}/>
+              <Line type = "monotone" dataKey="expense" stroke="#ef4444" strokeWidth={3} />
             </LineChart>
           </ResponsiveContainer>
         </div>
