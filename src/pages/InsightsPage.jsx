@@ -61,29 +61,42 @@ const InsightsPage = () => {
   const monthlyMap = {};
 
   transactions.forEach((t) => {
-    const month = t.date.slice(0, 7);
+    if (!t.date || !t.amount) return;
+
+    const parts = t.date.split("-");
+
+    if (parts.length < 3) return;
+
+    const month = `${parts[0]}-${parts[1].padStart(2, "0")}`;
 
     if (!monthlyMap[month]) {
-      monthlyMap[month] = { income: 0, expense: 0 };
+      monthlyMap[month] = {
+        income: 0,
+        expense: 0,
+      };
     }
 
+    const amount = Number(t.amount);
+
     if (t.type === "income") {
-      monthlyMap[month].income += t.amount;
+      monthlyMap[month].income += amount;
     } else {
-      monthlyMap[month].expense += t.amount;
+      monthlyMap[month].expense += amount;
     }
   });
 
-  const chartData = Object.keys(monthlyMap).map((m) => ({
-    month: m,
-    income: monthlyMap[m].income,
-    expense: monthlyMap[m].expense,
-  }));
+  const chartData = Object.entries(monthlyMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, values]) => ({
+      month,
+      income: values.income,
+      expense: values.expense,
+    }));
 
   return (
     <div className={`flex min-h-screen ${darkMode
-        ? "bg-gray-900 text-white"
-        : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
+      ? "bg-gray-900 text-white"
+      : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
       }`}>
       <Sidebar />
 
@@ -96,8 +109,8 @@ const InsightsPage = () => {
               key={r}
               onClick={() => setRange(r)}
               className={`px-4 py-2 rounded-lg ${range === r
-                  ? "bg-indigo-500 text-white "
-                  : " bg-gray-700 text-white"
+                ? "bg-indigo-500 text-white "
+                : " bg-gray-700 text-white"
                 }`}
             >
               {r === "all" ? "All" : `${r} Days`}
@@ -131,8 +144,8 @@ const InsightsPage = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Line type = "monotone" dataKey="income" stroke="#22c55e" strokeWidth={3}/>
-              <Line type = "monotone" dataKey="expense" stroke="#ef4444" strokeWidth={3} />
+              <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={3} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
