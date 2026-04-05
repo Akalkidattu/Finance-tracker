@@ -11,11 +11,8 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 min-h-screen p-6 bg-white/70 dark:bg-white/10 backdrop-blur-lg">
-
-      <h2 className="text-xl font-bold mb-6 dark:text-white">
-        Finance UI
-      </h2>
+    <div className="w-64 min-h-screen p-6 bg-white/70 dark:bg-gray-900 backdrop-blur-lg text-gray-800 dark:text-white transition-colors duration-300">
+      <h2 className="text-xl font-bold mb-6">Finance UI</h2>
 
       {items.map((item) => {
         const active = location.pathname === item.path;

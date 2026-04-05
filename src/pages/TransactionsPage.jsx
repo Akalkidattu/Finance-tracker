@@ -7,12 +7,17 @@ import { useState } from "react";
 import { exportToCSV } from "../utils/exportCSV";
 
 const TransactionsPage = () => {
-  const { role, transactions } = useFinance();
+  const { role, transactions, darkMode } = useFinance();
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-
+    <div
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-300 ${
+        darkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
+      }`}
+    >
       <Sidebar />
 
       <div className="flex-1 p-4 md:p-6">
@@ -21,7 +26,7 @@ const TransactionsPage = () => {
         <div className="flex flex-wrap gap-3 justify-end mb-4">
           <button
             onClick={() => exportToCSV(transactions)}
-            className="bg-green-500 text-white px-4 py-2 rounded"
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
           >
             Export CSV
           </button>
@@ -29,7 +34,7 @@ const TransactionsPage = () => {
           {role === "admin" && (
             <button
               onClick={() => setOpen(true)}
-              className="bg-indigo-500 text-white px-4 py-2 rounded"
+              className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600"
             >
               Add
             </button>

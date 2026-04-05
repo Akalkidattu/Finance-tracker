@@ -6,18 +6,16 @@ const Header = () => {
 
   return (
     <div className="flex justify-between items-center mb-8">
-
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+        <h1 className="text-4xl font-bold dark:text-white">
           Finance Dashboard
         </h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-300">
           Smart financial insights at a glance
         </p>
       </div>
 
       <div className="flex items-center gap-4">
-
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="p-2 rounded-lg bg-indigo-100 dark:bg-gray-700 text-gray-800 dark:text-white"
@@ -28,12 +26,11 @@ const Header = () => {
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="px-3 py-2 rounded-lg border dark:bg-gray-800 dark:text-white"
+          className="px-3 py-2 rounded-lg border bg-white text-black dark:bg-gray-800 dark:text-white dark:border-gray-600"
         >
           <option value="viewer">Viewer</option>
           <option value="admin">Admin</option>
         </select>
-
       </div>
     </div>
   );

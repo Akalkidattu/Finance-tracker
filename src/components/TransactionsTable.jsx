@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFinance } from "../context/FinanceContext";
 import AddTransaction from "./AddTransaction";
+import { cardStyle, inputStyle } from "../utils/theme";
 
 const TransactionsTable = () => {
   const { transactions, deleteTransaction, role } = useFinance();
@@ -9,23 +10,25 @@ const TransactionsTable = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [editData, setEditData] = useState(null);
 
-  const filtered = transactions.filter((t) =>
-    t.category.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = transactions.filter(
+  (t) =>
+    t.category.toLowerCase().includes(search.toLowerCase()) ||
+    t.description.toLowerCase().includes(search.toLowerCase())
+);
 
   return (
-    <div className="card text-gray-800 dark:text-white">
+    <div className={`${cardStyle} p-6`}>
 
       <input
         placeholder="Search category..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
-      />
+        className={`${inputStyle} mb-4`} />
 
-      <table className="w-full min-w-[700px] text-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-sm">
         <thead>
-          <tr className="text-left border-b">
+          <tr className="text-left border-b dark:border-gray-600">
             <th className="py-3">Date</th>
             <th>Description</th>
             <th>Category</th>
@@ -71,13 +74,14 @@ const TransactionsTable = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="6" className="text-center py-6 text-gray-400">
+              <td colSpan="6" className="text-center py-6 text-gray-400 dark:text-gray-500">
                 No transactions found
               </td>
             </tr>
           )}
         </tbody>
       </table>
+      </div>
 
       <AddTransaction
         isOpen={!!editData}
@@ -88,7 +92,7 @@ const TransactionsTable = () => {
       {deleteId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-[999]">
 
-          <div className="card text-center animate-scaleIn">
+          <div className="card text-center animate-scaleIn bg-white dark:bg-gray-800 text-black dark:text-white">
 
             <p className="mb-4">Delete this transaction?</p>
 

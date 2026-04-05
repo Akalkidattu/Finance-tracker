@@ -4,9 +4,13 @@ import { mockTransactions } from "../data/mockData";
 const FinanceContext = createContext();
 
 export const FinanceProvider = ({ children }) => {
-  const [transactions, setTransactions] = useState(
-    JSON.parse(localStorage.getItem("transactions")) ?? mockTransactions
-  );
+  const [transactions, setTransactions] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem("transactions")) ?? mockTransactions;
+  } catch {
+    return mockTransactions;
+  }
+});
 
   const [role, setRole] = useState("viewer");
 

@@ -1,8 +1,7 @@
-import { FiTrendingUp, FiTrendingDown, FiDollarSign } from "react-icons/fi";
-import { GiPayMoney, GiReceiveMoney, GiPiggyBank } from "react-icons/gi";
+import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
+import { GiPayMoney, GiPiggyBank } from "react-icons/gi";
 
 const SummaryCard = ({ title, value, type }) => {
-
   const styles = {
     income: "from-green-400 to-green-600",
     expense: "from-red-400 to-red-600",
@@ -18,17 +17,15 @@ const SummaryCard = ({ title, value, type }) => {
   };
 
   return (
-    <div className={`p-6 rounded-2xl text-white shadow-lg bg-gradient-to-r ${styles[type]} hover:scale-105 transition`}>
-
+    <div
+      className={`p-6 rounded-2xl text-white shadow-lg bg-gradient-to-r ${styles[type]} hover:scale-105 transition`}
+    >
       <div className="flex justify-between items-center">
         <p>{title}</p>
         {icons[type]}
       </div>
 
-      <h2 className="text-2xl font-bold mt-4">
-        ₹{value}
-      </h2>
-
+      <h2 className="text-2xl font-bold mt-4">₹{value}</h2>
     </div>
   );
 };

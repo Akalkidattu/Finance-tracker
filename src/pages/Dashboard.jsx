@@ -11,15 +11,20 @@ import {
 } from "../utils/calculations";
 
 const Dashboard = () => {
-  const { transactions } = useFinance();
+  const { transactions, darkMode } = useFinance();
 
   const income = getTotalIncome(transactions);
   const expense = getTotalExpense(transactions);
   const balance = getBalance(transactions);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-indigo-200 via-white to-purple-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-
+    <div
+      className={`flex min-h-screen transition-colors duration-300 ${
+        darkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
+      }`}
+    >
       <Sidebar />
 
       <div className="flex-1 p-6">
@@ -36,7 +41,6 @@ const Dashboard = () => {
           <BalanceChart />
           <ExpenseChart />
         </div>
-
       </div>
     </div>
   );
