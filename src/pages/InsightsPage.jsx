@@ -10,8 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useState } from "react";
-// eslint-disable-next-line no-unused-vars
-import { pageStyle, cardStyle } from "../utils/theme";
+import { cardStyle } from "../utils/theme";
 
 const InsightsPage = () => {
   const { transactions, darkMode } = useFinance();
@@ -40,8 +39,8 @@ const InsightsPage = () => {
   const income = filtered.filter((t) => t.type === "income");
   const expense = filtered.filter((t) => t.type === "expense");
 
-  const totalIncome = income.reduce((a, b) => a + b.amount, 0);
-  const totalExpense = expense.reduce((a, b) => a + b.amount, 0);
+  const totalIncome = income.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const totalExpense = expense.reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   const savings = totalIncome - totalExpense;
   const savingsRate = totalIncome
@@ -49,9 +48,10 @@ const InsightsPage = () => {
     : 0;
 
   const categoryMap = {};
+
   expense.forEach((t) => {
     categoryMap[t.category] =
-      (categoryMap[t.category] || 0) + t.amount;
+      (categoryMap[t.category] || 0) + Number(t.amount || 0);
   });
 
   const topCategory = Object.entries(categoryMap).sort(
@@ -61,13 +61,15 @@ const InsightsPage = () => {
   const monthlyMap = {};
 
   transactions.forEach((t) => {
-    if (!t.date || !t.amount) return;
+    if (!t.date) return;
 
-    const parts = t.date.split("-");
+    const date = new Date(t.date);
 
-    if (parts.length < 3) return;
+    if (isNaN(date)) return;
 
-    const month = `${parts[0]}-${parts[1].padStart(2, "0")}`;
+    const month = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}`;
 
     if (!monthlyMap[month]) {
       monthlyMap[month] = {
@@ -76,7 +78,7 @@ const InsightsPage = () => {
       };
     }
 
-    const amount = Number(t.amount);
+    const amount = Number(t.amount || 0);
 
     if (t.type === "income") {
       monthlyMap[month].income += amount;
@@ -86,18 +88,21 @@ const InsightsPage = () => {
   });
 
   const chartData = Object.entries(monthlyMap)
-    .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, values]) => ({
       month,
       income: values.income,
       expense: values.expense,
-    }));
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
 
   return (
-    <div className={`flex min-h-screen ${darkMode
-      ? "bg-gray-900 text-white"
-      : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
-      }`}>
+    <div
+      className={`flex min-h-screen ${
+        darkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gradient-to-br from-indigo-100 via-white to-purple-100 text-gray-900"
+      }`}
+    >
       <Sidebar />
 
       <div className="flex-1 p-6">
@@ -108,10 +113,11 @@ const InsightsPage = () => {
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`px-4 py-2 rounded-lg ${range === r
-                ? "bg-indigo-500 text-white "
-                : " bg-gray-700 text-white"
-                }`}
+              className={`px-4 py-2 rounded-lg transition ${
+                range === r
+                  ? "bg-indigo-500 text-white"
+                  : "bg-gray-700 text-white"
+              }`}
             >
               {r === "all" ? "All" : `${r} Days`}
             </button>
@@ -119,33 +125,53 @@ const InsightsPage = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className={`${cardStyle} p-4`}>
-            <h3>Top Spending Category</h3>
-            <p className="text-xl font-bold">{topCategory?.[0]}</p>
-            <p>₹{topCategory?.[1]} spent</p>
+          <div className={`${cardStyle} p-5`}>
+            <h3 className="text-sm opacity-70">Top Spending Category</h3>
+            <p className="text-xl font-bold">{topCategory?.[0] || "N/A"}</p>
+            <p>₹{topCategory?.[1] || 0}</p>
           </div>
 
-          <div className={`${cardStyle} p-4`}>
-            <h3>Savings Rate</h3>
+          <div className={`${cardStyle} p-5`}>
+            <h3 className="text-sm opacity-70">Savings Rate</h3>
             <p className="text-xl font-bold">{savingsRate}%</p>
           </div>
 
-          <div className={`${cardStyle} p-4`}>
-            <h3>Net Savings</h3>
+          <div className={`${cardStyle} p-5`}>
+            <h3 className="text-sm opacity-70">Net Savings</h3>
             <p className="text-xl font-bold">₹{savings}</p>
           </div>
         </div>
 
-        <div className={`${cardStyle} mt-8 h-[320px] p-6`}>
-          <h3 className="mb-4">Monthly Comparison</h3>
+        <div className={`${cardStyle} mt-8 h-[340px] p-6`}>
+          <h3 className="mb-4 font-semibold">Monthly Comparison</h3>
 
           <ResponsiveContainer width="100%" height="85%">
-            <LineChart data={chartData}>
-              <XAxis dataKey="month" />
+            <LineChart
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+            >
+              <XAxis
+                dataKey="month"
+                tickFormatter={(value) => value.slice(5)}
+              />
               <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={3} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} />
+              <Tooltip
+                formatter={(value) => `₹${value}`}
+              />
+              <Line
+                type="monotone"
+                dataKey="income"
+                stroke="#22c55e"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="expense"
+                stroke="#ef4444"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
