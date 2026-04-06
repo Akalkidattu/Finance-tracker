@@ -32,6 +32,11 @@ useEffect(() => {
 }, [darkMode]);
 
   useEffect(() => {
+    if (transactions.length === 0) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTransactions(mockTransactions);
+  }
+  
     localStorage.setItem("transactions", JSON.stringify(transactions));
   }, [transactions]);
 
