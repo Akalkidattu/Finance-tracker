@@ -27,7 +27,7 @@ const Dashboard = () => {
     >
       <Sidebar />
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 pt-16">
         <Header />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

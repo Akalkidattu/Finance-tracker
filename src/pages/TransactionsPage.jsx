@@ -20,7 +20,7 @@ const TransactionsPage = () => {
     >
       <Sidebar />
 
-      <div className="flex-1 p-4 md:p-6">
+      <div className="flex-1 p-4 pt-16 md:p-6">
         <Header />
 
         <div className="flex flex-wrap gap-3 justify-end mb-4">
