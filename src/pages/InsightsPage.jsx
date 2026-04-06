@@ -8,71 +8,103 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
+  Legend,
 } from "recharts";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cardStyle } from "../utils/theme";
 
 const InsightsPage = () => {
   const { transactions, darkMode } = useFinance();
   const [range, setRange] = useState("all");
 
-  const today = new Date();
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr || typeof dateStr !== "string") return null;
 
-  const filtered = transactions.filter((t) => {
-    const txDate = new Date(t.date);
+    const normalized = dateStr.trim();
 
-    if (range === "7") {
-      const last7 = new Date();
-      last7.setDate(today.getDate() - 7);
-      return txDate >= last7;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      const [year, month, day] = normalized.split("-").map(Number);
+      const date = new Date(year, month - 1, day);
+      return Number.isNaN(date.getTime()) ? null : date;
     }
 
-    if (range === "30") {
-      const last30 = new Date();
-      last30.setDate(today.getDate() - 30);
-      return txDate >= last30;
-    }
+    const fallback = new Date(normalized);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  };
 
-    return true;
-  });
+  const startOfDay = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const formatCurrency = (value) =>
+    `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+  const filtered = useMemo(() => {
+    const today = startOfDay(new Date());
+
+    return transactions.filter((t) => {
+      const txDate = parseLocalDate(t.date);
+      if (!txDate) return false;
+
+      const txDay = startOfDay(txDate);
+
+      if (range === "7") {
+        const last7 = new Date(today);
+        last7.setDate(today.getDate() - 6);
+        return txDay >= last7 && txDay <= today;
+      }
+
+      if (range === "30") {
+        const last30 = new Date(today);
+        last30.setDate(today.getDate() - 29);
+        return txDay >= last30 && txDay <= today;
+      }
+
+      return true;
+    });
+  }, [transactions, range]);
 
   const income = filtered.filter((t) => t.type === "income");
   const expense = filtered.filter((t) => t.type === "expense");
 
   const totalIncome = income.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-  const totalExpense = expense.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const totalExpense = expense.reduce(
+    (sum, t) => sum + Number(t.amount || 0),
+    0
+  );
 
   const savings = totalIncome - totalExpense;
   const savingsRate = totalIncome
-    ? ((savings / totalIncome) * 100).toFixed(0)
+    ? Math.round((savings / totalIncome) * 100)
     : 0;
 
   const categoryMap = {};
-
   expense.forEach((t) => {
-    categoryMap[t.category] =
-      (categoryMap[t.category] || 0) + Number(t.amount || 0);
+    const category = t.category || "Other";
+    categoryMap[category] =
+      (categoryMap[category] || 0) + Number(t.amount || 0);
   });
 
-  const topCategory = Object.entries(categoryMap).sort(
-    (a, b) => b[1] - a[1]
-  )[0];
+  const topCategory =
+    Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0] || null;
 
   const monthlyMap = {};
 
-  transactions.forEach((t) => {
-    if (!t.date) return;
+  filtered.forEach((t) => {
+    const date = parseLocalDate(t.date);
+    if (!date) return;
 
-    const date = new Date(t.date);
-
-    if (isNaN(date)) return;
-
-    const month = `${date.getFullYear()}-${String(
+    const monthKey = `${date.getFullYear()}-${String(
       date.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    if (!monthlyMap[month]) {
-      monthlyMap[month] = {
+    if (!monthlyMap[monthKey]) {
+      monthlyMap[monthKey] = {
+        monthKey,
+        label: date.toLocaleString("en-IN", {
+          month: "short",
+          year: "2-digit",
+        }),
         income: 0,
         expense: 0,
       };
@@ -81,19 +113,15 @@ const InsightsPage = () => {
     const amount = Number(t.amount || 0);
 
     if (t.type === "income") {
-      monthlyMap[month].income += amount;
-    } else {
-      monthlyMap[month].expense += amount;
+      monthlyMap[monthKey].income += amount;
+    } else if (t.type === "expense") {
+      monthlyMap[monthKey].expense += amount;
     }
   });
 
-  const chartData = Object.entries(monthlyMap)
-    .map(([month, values]) => ({
-      month,
-      income: values.income,
-      expense: values.expense,
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month));
+  const chartData = Object.values(monthlyMap).sort((a, b) =>
+    a.monthKey.localeCompare(b.monthKey)
+  );
 
   return (
     <div
@@ -128,7 +156,7 @@ const InsightsPage = () => {
           <div className={`${cardStyle} p-5`}>
             <h3 className="text-sm opacity-70">Top Spending Category</h3>
             <p className="text-xl font-bold">{topCategory?.[0] || "N/A"}</p>
-            <p>₹{topCategory?.[1] || 0}</p>
+            <p>{formatCurrency(topCategory?.[1] || 0)} spent</p>
           </div>
 
           <div className={`${cardStyle} p-5`}>
@@ -138,42 +166,62 @@ const InsightsPage = () => {
 
           <div className={`${cardStyle} p-5`}>
             <h3 className="text-sm opacity-70">Net Savings</h3>
-            <p className="text-xl font-bold">₹{savings}</p>
+            <p className="text-xl font-bold">{formatCurrency(savings)}</p>
           </div>
         </div>
 
         <div className={`${cardStyle} mt-8 h-[340px] p-6`}>
           <h3 className="mb-4 font-semibold">Monthly Comparison</h3>
 
-          <ResponsiveContainer width="100%" height="85%">
-            <LineChart
-              data={chartData}
-              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-            >
-              <XAxis
-                dataKey="month"
-                tickFormatter={(value) => value.slice(5)}
-              />
-              <YAxis />
-              <Tooltip
-                formatter={(value) => `₹${value}`}
-              />
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="#22c55e"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="expense"
-                stroke="#ef4444"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="85%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={darkMode ? "#374151" : "#e5e7eb"}
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: darkMode ? "#d1d5db" : "#374151", fontSize: 12 }}
+                />
+                <YAxis
+                  tick={{ fill: darkMode ? "#d1d5db" : "#374151", fontSize: 12 }}
+                />
+                <Tooltip
+                  formatter={(value, name) => [
+                    formatCurrency(value),
+                    name === "income" ? "Income" : "Expense",
+                  ]}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="income"
+                  name="income"
+                  stroke="#22c55e"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="expense"
+                  name="expense"
+                  stroke="#ef4444"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[85%] flex items-center justify-center text-sm opacity-70">
+              No transaction data available for the selected range.
+            </div>
+          )}
         </div>
       </div>
     </div>
